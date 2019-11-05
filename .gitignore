@@ -1,0 +1,9 @@
+pan
+pan.[cbhmt]
+*.trail
+*.tcl
+*.ps
+*.pdf
+*.dot
+dot*
+*.png
