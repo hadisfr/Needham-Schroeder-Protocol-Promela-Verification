@@ -21,7 +21,6 @@ active proctype Alice() {
     encrypted_msg outgoing_msg, incoming_msg
     mtype:agent receiver
 
-start:
     atomic {
         alice_verified_partner = john
         if
@@ -48,16 +47,14 @@ start:
                 skip
             :: else ->
                 printf("Invalid Key for A\n")
-                assert(false)
-                goto start
+                goto err
         fi
         if
             :: incoming_msg.cnt1 == nonce ->
                 skip
             :: else ->
                 printf("Invalid Nonce for A\n")
-                assert(false)
-                goto start
+                goto err
         fi
 
         alice_verified_partner = receiver
@@ -73,6 +70,10 @@ start:
         fi
         network ! ack(receiver, outgoing_msg)
     }
+    goto end
+err:
+    printf("err in Alice")
+end:
 }
 
 active proctype Bob() {
@@ -82,7 +83,6 @@ active proctype Bob() {
     encrypted_msg outgoing_msg, incoming_msg
     mtype:agent receiver
 
-start:
     bob_verified_partner = john
     
     atomic {
@@ -92,8 +92,7 @@ start:
                 skip
             :: else ->
                 printf("Invalid Key for B: %e\n", incoming_msg.key)
-                // assert(false)
-                goto start
+                goto err
         fi
     }
     atomic {
@@ -116,20 +115,22 @@ start:
                 skip
             :: else ->
                 printf("Invalid Key for B\n")
-                // assert(false)
-                goto start
+                goto err
         fi
         if
             :: incoming_msg.cnt1 == nonce ->
                 skip
             :: else ->
                 printf("Invalid Nonce for B\n")
-                // assert(false)
-                goto start
+                goto err
         fi
 
         bob_verified_partner = alice
     }
+    goto end
+err:
+    printf("err in Bob")
+end:
 }
 
 active proctype Intruder() {
@@ -137,7 +138,7 @@ active proctype Intruder() {
     mtype:msg_key key = key_intruder
 
     mtype:msg_t stored_msg_t, outgoing_msg_t
-    mtype:agent stored_msg_receiver, outgoing_msg_receiver
+    mtype:agent stored_msg_receiver, outgoing_msg_receiver, outgoing_msg_sender
     encrypted_msg stored_msg, outgoing_msg
     mtype:msg_cnt stored_cnt1, stored_cnt2
     mtype:msg_key stored_key
@@ -158,18 +159,14 @@ end_iteration:
                                         nonce_alice_stored = stored_cnt2
                                     :: stored_cnt1 == bob_agent ->
                                         nonce_bob_stored = stored_cnt2
-                                    :: else ->
-                                        skip
                                 fi
                             :: stored_msg_t == synack ->
                                          nonce_john_stored = stored_cnt2
                             :: stored_msg_t == ack ->
                                         nonce_john_stored = stored_cnt1
-                            :: else ->
-                                skip
                         fi
                     :: else ->
-                        skip
+                        goto end_iteration
                 fi
             }
         ::  // resend message
@@ -192,44 +189,57 @@ end_iteration:
                     fi
                     network ! stored_msg_t, outgoing_msg_receiver, outgoing_msg
             }
-        :: // send messages with true identity
-            atomic {
+        :: // send new messages
+        atomic {
+            if
+                :: outgoing_msg_receiver = alice ->
+                    outgoing_msg.key = key_alice
+                :: outgoing_msg_receiver = bob ->
+                    outgoing_msg.key = key_bob
+            fi
+            if
+            :: outgoing_msg_t = syn ->
                 if
-                    :: outgoing_msg_receiver = alice
-                    :: outgoing_msg_receiver = bob
+                    :: true ->
+                        outgoing_msg.cnt1 = intruder
+                        outgoing_msg.cnt2 = nonce_intruder
+                    :: outgoing_msg_receiver != alice && nonce_alice_stored != 0 ->
+                        outgoing_msg.cnt1 = alice
+                        outgoing_msg.cnt2 = nonce_alice_stored
+                    :: outgoing_msg_receiver != bob && nonce_bob_stored != 0 ->
+                        outgoing_msg.cnt1 = bob
+                        outgoing_msg.cnt2 = nonce_bob_stored
+                fi
+            :: outgoing_msg_t = synack ->
+                if
+                    :: outgoing_msg_receiver == alice && nonce_alice_stored != 0 ->
+                        outgoing_msg.cnt1 = nonce_alice_stored
+                    :: outgoing_msg_receiver == bob && nonce_bob_stored != 0 ->
+                        outgoing_msg.cnt1 = nonce_bob_stored
+                    :: else ->
+                        goto end_iteration
                 fi
                 if
-                :: true ->
-                    outgoing_msg_t = syn
-                    outgoing_msg.cnt1 = intruder
-                    outgoing_msg.cnt2 = nonce
-                :: stored_msg_t == syn && stored_msg.key == key_intruder ->
-                    outgoing_msg_t = synack
-                    if
-                        :: stored_msg.cnt1 == alice_agent ->
-                            outgoing_msg_receiver = alice
-                            outgoing_msg.key = key_alice
-                        :: stored_msg.cnt1 == bob_agent ->
-                            outgoing_msg_receiver = bob
-                            outgoing_msg.key = key_bob
-                    fi
-                    outgoing_msg.cnt1 = stored_msg.cnt2
-                    outgoing_msg.cnt2 = nonce
-                :: stored_msg_t == synack && stored_msg.key == key_intruder ->
-                    outgoing_msg_t = ack
-                    outgoing_msg.cnt1 = stored_msg.cnt2
-                    outgoing_msg.cnt2 = null
-                    if
-                        :: outgoing_msg_receiver == bob ->
-                            outgoing_msg.key = key_bob
-                        :: outgoing_msg_receiver == intruder ->
-                            outgoing_msg.key = key_intruder
-                    fi
-                :: else ->
-                    skip
-                network ! outgoing_msg_t, outgoing_msg_receiver, outgoing_msg
+                    :: true ->
+                        outgoing_msg.cnt2 = nonce_intruder
+                    :: outgoing_msg_receiver != alice && nonce_alice_stored != 0 ->
+                        outgoing_msg.cnt2 = nonce_alice_stored
+                    :: outgoing_msg_receiver != bob && nonce_bob_stored != 0 ->
+                        outgoing_msg.cnt2 = nonce_bob_stored
                 fi
-            }
+            :: outgoing_msg_t = ack ->
+                outgoing_msg.cnt2 = null
+                if
+                    :: outgoing_msg_receiver == alice && nonce_alice_stored != 0 ->
+                        outgoing_msg.cnt1 = nonce_alice_stored
+                    :: outgoing_msg_receiver == bob && nonce_bob_stored != 0 ->
+                        outgoing_msg.cnt1 = nonce_bob_stored
+                    :: else ->
+                        goto end_iteration
+                fi
+            fi
+            network ! outgoing_msg_t, outgoing_msg_receiver, outgoing_msg
+        }
     od
 }
 
@@ -245,13 +255,13 @@ ltl encrypted_connection {
 
 ltl alice_confidentiality {
     [](
-        alice_verified_partner == bob -> nonce_alice_stored != nonce_alice
+        alice_verified_partner == bob -> nonce_alice_stored != nonce_alice && nonce_john_stored != nonce_alice
     )
 }
 
 ltl bob_confidentiality {
     [](
-        bob_verified_partner == alice -> nonce_bob_stored != nonce_bob
+        bob_verified_partner == alice -> nonce_bob_stored != nonce_bob && nonce_john_stored != nonce_bob
     )
 }
 
