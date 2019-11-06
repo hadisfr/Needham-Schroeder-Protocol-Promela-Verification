@@ -22,7 +22,7 @@ active proctype Alice() {
     mtype:agent receiver
 
     atomic {
-        alice_verified_partner = john
+        alice_verified_partner = 0
         if
             :: receiver = bob
             :: receiver = intruder
@@ -83,7 +83,7 @@ active proctype Bob() {
     encrypted_msg outgoing_msg, incoming_msg
     mtype:agent receiver
 
-    bob_verified_partner = john
+    bob_verified_partner = 0
     
     atomic {
         network ? syn(bob, incoming_msg)
@@ -239,7 +239,7 @@ end_iteration:
 
 ltl encrypted_connection {
     [](
-        (alice_verified_partner != john && bob_verified_partner != john && alice_verified_partner != 0 && bob_verified_partner != 0) -> (
+        (alice_verified_partner != 0 && bob_verified_partner != 0) -> (
             alice_verified_partner == bob -> bob_verified_partner == alice
             &&
             bob_verified_partner == alice -> alice_verified_partner == bob
@@ -261,8 +261,5 @@ ltl bob_confidentiality {
 
 
 ltl termination {
-    <> (
-        alice_verified_partner != 0 && alice_verified_partner != john &&
-        bob_verified_partner == 0 && bob_verified_partner == john
-    )
+    <> (alice_verified_partner != 0 && bob_verified_partner == 0)
 }
