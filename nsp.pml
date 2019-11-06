@@ -263,3 +263,11 @@ ltl bob_confidentiality {
 ltl termination {
     <> (alice_verified_partner != 0 && bob_verified_partner == 0)
 }
+
+ltl not_interruption {
+    [](
+        (alice_verified_partner != 0 && bob_verified_partner != 0) -> (
+            (alice_verified_partner == bob && bob_verified_partner == alice)
+        )
+    )
+}
