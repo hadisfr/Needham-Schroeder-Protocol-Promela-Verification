@@ -200,42 +200,36 @@ end_iteration:
             if
             :: outgoing_msg_t = syn ->
                 if
-                    :: true ->
-                        outgoing_msg.cnt1 = intruder
-                        outgoing_msg.cnt2 = nonce_intruder
-                    :: outgoing_msg_receiver != alice && nonce_alice_stored != 0 ->
-                        outgoing_msg.cnt1 = alice
-                        outgoing_msg.cnt2 = nonce_alice_stored
-                    :: outgoing_msg_receiver != bob && nonce_bob_stored != 0 ->
-                        outgoing_msg.cnt1 = bob
-                        outgoing_msg.cnt2 = nonce_bob_stored
+                    :: outgoing_msg.cnt1 = intruder
+                    :: outgoing_msg.cnt1 = alice
+                    :: outgoing_msg.cnt1 = bob
+                fi
+                if
+                    :: outgoing_msg.cnt2 = nonce_intruder
+                    :: outgoing_msg.cnt2 = nonce_alice_stored
+                    :: outgoing_msg.cnt2 = nonce_bob_stored
+                    :: outgoing_msg.cnt2 = nonce_john_stored
                 fi
             :: outgoing_msg_t = synack ->
                 if
-                    :: outgoing_msg_receiver == alice && nonce_alice_stored != 0 ->
-                        outgoing_msg.cnt1 = nonce_alice_stored
-                    :: outgoing_msg_receiver == bob && nonce_bob_stored != 0 ->
-                        outgoing_msg.cnt1 = nonce_bob_stored
-                    :: else ->
-                        goto end_iteration
+                    :: outgoing_msg.cnt2 = nonce_intruder
+                    :: outgoing_msg.cnt2 = nonce_alice_stored
+                    :: outgoing_msg.cnt2 = nonce_bob_stored
+                    :: outgoing_msg.cnt2 = nonce_john_stored
                 fi
                 if
-                    :: true ->
-                        outgoing_msg.cnt2 = nonce_intruder
-                    :: outgoing_msg_receiver != alice && nonce_alice_stored != 0 ->
-                        outgoing_msg.cnt2 = nonce_alice_stored
-                    :: outgoing_msg_receiver != bob && nonce_bob_stored != 0 ->
-                        outgoing_msg.cnt2 = nonce_bob_stored
+                    :: outgoing_msg.cnt1 = nonce_intruder
+                    :: outgoing_msg.cnt1 = nonce_alice_stored
+                    :: outgoing_msg.cnt1 = nonce_bob_stored
+                    :: outgoing_msg.cnt1 = nonce_john_stored
                 fi
             :: outgoing_msg_t = ack ->
                 outgoing_msg.cnt2 = null
                 if
-                    :: outgoing_msg_receiver == alice && nonce_alice_stored != 0 ->
-                        outgoing_msg.cnt1 = nonce_alice_stored
-                    :: outgoing_msg_receiver == bob && nonce_bob_stored != 0 ->
-                        outgoing_msg.cnt1 = nonce_bob_stored
-                    :: else ->
-                        goto end_iteration
+                    :: outgoing_msg.cnt2 = nonce_intruder
+                    :: outgoing_msg.cnt2 = nonce_alice_stored
+                    :: outgoing_msg.cnt2 = nonce_bob_stored
+                    :: outgoing_msg.cnt2 = nonce_john_stored
                 fi
             fi
             network ! outgoing_msg_t, outgoing_msg_receiver, outgoing_msg
@@ -272,14 +266,3 @@ ltl termination {
         bob_verified_partner == 0 && bob_verified_partner == john
     )
 }
-
-
-/*
-init {
-    printf("%e\n", null)
-    printf("%e\n", alice_agent)
-    printf("%e\n", bob_agent)
-    printf("%e\n", nonce_alice)
-    printf("%e\n", nonce_bob)
-}
-*/
