@@ -125,7 +125,7 @@ active proctype Bob() {
                 goto err
         fi
 
-        bob_verified_partner = alice
+        bob_verified_partner = receiver
     }
     goto end
 err:
