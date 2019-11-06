@@ -1,0 +1,30 @@
+digraph p_Alice {
+size="8,10";
+  GT [shape=box,style=dotted,label="Alice"];
+  GT -> S6;
+	S6 -> S4  [color=black,style=dashed,label="alice_verified_partner = 0"];
+	S4 -> S16  [color=black,style=dashed,label="receiver = 2"];
+	S4 -> S16  [color=black,style=dashed,label="receiver = 1"];
+	S16 -> S13  [color=black,style=dashed,label="outgoing_msg.cnt1 = 6"];
+	S13 -> S15  [color=black,style=dashed,label="((receiver==2))"];
+	S13 -> S15  [color=black,style=dashed,label="((receiver==1))"];
+	S15 -> S33  [color=black,style=bold,label="network!3,receiver,outgoing_msg.cnt1,outgoing_msg.cnt2,outgoing_msg.key"];
+	S33 -> S23  [color=black,style=dashed,label="network?2,3,incoming_msg.cnt1,incoming_msg.cnt2,incoming_msg.key"];
+	S23 -> S19  [color=black,style=dashed,label="((incoming_msg.key==key))"];
+	S23 -> S21  [color=black,style=dashed,label="else"];
+	S19 -> S30  [color=black,style=dashed,label="(1)"];
+	S30 -> S26  [color=black,style=dashed,label="((incoming_msg.cnt1==nonce))"];
+	S30 -> S28  [color=black,style=dashed,label="else"];
+	S26 -> S43  [color=black,style=dashed,label="(1)"];
+	S43 -> S40  [color=black,style=dashed,label="outgoing_msg.cnt1 = incoming_msg.cnt2"];
+	S40 -> S42  [color=black,style=dashed,label="((receiver==2))"];
+	S40 -> S42  [color=black,style=dashed,label="((receiver==1))"];
+	S42 -> S46  [color=black,style=bold,label="network!1,receiver,outgoing_msg.cnt1,outgoing_msg.cnt2,outgoing_msg.key"];
+	S46 -> S47  [color=black,style=solid,label="(1)"];
+  S46 [color=blue,style=bold,shape=box];
+	S47 -> S0  [color=black,style=solid,label="-end-"];
+  S47 [color=blue,style=bold,shape=box];
+	S28 -> S45  [color=black,style=dashed,label="printf('Invalid Nonce for A ')"];
+	S45 -> S46  [color=black,style=solid,label="printf('err in Alice')"];
+	S21 -> S45  [color=black,style=dashed,label="printf('Invalid Key for A ')"];
+}

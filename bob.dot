@@ -1,0 +1,28 @@
+digraph p_Bob {
+size="8,10";
+  GT [shape=box,style=dotted,label="Bob"];
+  GT -> S1;
+    S1 -> S10  [color=black,style=bold,label="bob_verified_partner = 0"];
+    S10 -> S8  [color=black,style=dashed,label="network?3,2,incoming_msg.cnt1,incoming_msg.cnt2,incoming_msg.key"];
+    S8 -> S4  [color=black,style=dashed,label="((incoming_msg.key==key))"];
+    S8 -> S6  [color=black,style=dashed,label="else"];
+    S4 -> S22  [color=black,style=dashed,label="(1)"];
+    S22 -> S21  [color=black,style=dashed,label="((incoming_msg.cnt1==6))"];
+    S22 -> S21  [color=black,style=dashed,label="((incoming_msg.cnt1==4))"];
+    S21 -> S39  [color=black,style=bold,label="network!2,receiver,outgoing_msg.cnt1,outgoing_msg.cnt2,outgoing_msg.key"];
+    S39 -> S29  [color=black,style=dashed,label="network?1,2,incoming_msg.cnt1,incoming_msg.cnt2,incoming_msg.key"];
+    S29 -> S25  [color=black,style=dashed,label="((incoming_msg.key==key))"];
+    S29 -> S27  [color=black,style=dashed,label="else"];
+    S25 -> S36  [color=black,style=dashed,label="(1)"];
+    S36 -> S32  [color=black,style=dashed,label="((incoming_msg.cnt1==nonce))"];
+    S36 -> S34  [color=black,style=dashed,label="else"];
+    S32 -> S42  [color=black,style=bold,label="(1)"];
+    S42 -> S43  [color=black,style=solid,label="(1)"];
+  S42 [color=blue,style=bold,shape=box];
+    S43 -> S0  [color=black,style=solid,label="-end-"];
+  S43 [color=blue,style=bold,shape=box];
+    S34 -> S41  [color=black,style=dashed,label="printf('Invalid Nonce for B ')"];
+    S41 -> S42  [color=black,style=solid,label="printf('err in Bob')"];
+    S27 -> S41  [color=black,style=dashed,label="printf('Invalid Key for B ')"];
+    S6 -> S41  [color=black,style=dashed,label="printf('Invalid Key for B: %e ',incoming_msg.key)"];
+}
