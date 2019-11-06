@@ -200,9 +200,9 @@ end_iteration:
             if
             :: outgoing_msg_t = syn ->
                 if
-                    :: outgoing_msg.cnt1 = intruder
-                    :: outgoing_msg.cnt1 = alice
-                    :: outgoing_msg.cnt1 = bob
+                    :: outgoing_msg.cnt1 = intruder_agent
+                    :: outgoing_msg.cnt1 = alice_agent
+                    :: outgoing_msg.cnt1 = bob_agent
                 fi
                 if
                     :: outgoing_msg.cnt2 = nonce_intruder
