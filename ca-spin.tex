@@ -1,0 +1,219 @@
+\documentclass[a4paper]{article}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{pstricks}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{indentfirst}
+\usepackage{float}
+\usepackage[inline]{enumitem}
+\usepackage{listings}
+\usepackage[colorlinks, citecolor=Cyan, linkcolor=Cyan, filecolor=Cyan, urlcolor=Cyan]{hyperref}
+\usepackage{xepersian}
+
+\settextfont{XBNiloofar}
+\setlatintextfont{Junicode}
+
+\makeatletter
+\AtBeginDocument{
+    \hypersetup{pdftitle=\@course\ :: \@title}
+    \hypersetup{pdfauthor=\@author}
+}
+\renewcommand{\maketitle}[0]{
+\clearpage
+{\centering
+\begin{minipage}{0.2\textwidth}
+\raggedleft
+\resizebox{!}{15ex}{\includegraphics{fanni.pdf}}
+\end{minipage}
+\begin{minipage}{0.5\textwidth}
+\centering
+
+{\large دانشگاه تهران}
+
+پردیس دانشکده‌های فنی
+
+دانشکدهٔ مهندسی برق و کامپیوتر
+
+\end{minipage}
+\begin{minipage}{0.2\textwidth}
+\raggedright
+\resizebox{!}{15ex}{\includegraphics{ut.pdf}}
+\end{minipage}
+
+{\vspace*{3ex}\Large\@course\\\vspace*{2ex}\LARGE\@title}
+
+{\large\vspace*{3ex}\@author}
+
+{\vspace*{2ex}مهلت تحویل: \@date}
+
+\hfill\hrulefill\hfill~
+
+\vspace{5ex}
+}
+}
+\newcommand{\course}[1]{\def\@course{#1}}
+\renewcommand{\thesubsection}{\@arabic\c@subsection}
+\makeatother
+
+\newenvironment{inlinelist}[1][,\ ]{\begin{itemize*}[label={}, afterlabel={}, itemjoin={#1}, itemjoin*={\ and\ }]}{\end{itemize*}}
+\newcommand{\mail}[1]{\lr{\href{mailto:#1?subject=[FM]\%20}{\lr{\small\ttfamily #1}}}}
+\renewcommand{\labelitemii}{$\circ$}
+
+% \tolerance=5000
+\lstset{
+    language=promela,
+    % columns=flexible,
+    basicstyle=\small\ttfamily,
+    keywordstyle=\bfseries\color{Blue},
+    keywordstyle={[2]\bfseries\color{BlueViolet}},
+    stringstyle=\color{Red},
+    commentstyle=\color{Green},
+    identifierstyle=\color{Black},
+    % numbers=none,
+    % numberstyle=\scriptsize\rl,
+    % captionpos=b,
+    % breaklines=true,
+    % breakatwhitespace=true,
+    % showstringspaces=false,
+    % tabsize=4,
+    % morecomment=[l][\color{Sepia}]{\#}
+}
+
+\course{روش‌های رسمی در مهندسی نرم‌افزار}
+\title{تمرین کامپیوتری \lr{Spin}}
+\date{نیمه‌شب جمعه ۱۳ دی}
+\author{
+    هادی صفری\\
+    {\normalsize\mail{hadi.safari@ut.ac.ir}}
+}
+
+\begin{document}
+\maketitle
+
+\section*{راه‌اندازی ابزار \lr{Spin}}
+
+در این تمرین
+مدل‌سازی یک سیستم با زبان \lr{PROMELA}
+و درستی‌یابی آن با ابزار \href{http://spinroot.com}{\lr{Spin}}
+را تمرین خواهید کرد.
+برای بارگیری \lr{Spin} می‌توانید به راهنمای آن در آدرس \lr{\url{http://spinroot.com/spin/Man/README.html}} مراجعه کنید
+یا
+از دستورهای
+\lr{\lstinline[language=bash]{sudo apt-get install spin}} (در \lr{Ubuntu Linux})
+یا
+\lr{\lstinline[language=bash]{brew install spin}} (در \lr{macOS} با \lr{\href{https://brew.sh/}{HomeBrew}})
+استفاده کنید.
+
+برای راحتی کار می‌توانید از رابط‌های گرافیکی‌ای که روی \lr{Spin} طراحی شده‌اند مانند
+\href{https://raw.githubusercontent.com/nimble-code/Spin/master/optional_gui/ispin.tcl}{\lr{iSpin}}\footnote{نیازمند \lr{Tcl/Tk Wish}}
+و
+\href{https://github.com/motib/jspin/raw/master/jspin.jar}{\lr{jSpin}}\footnote{نیازمند \lr{Java}}
+نیز کمک بگیرید.
+توجه داشته باشید که در انتها باید کد خود را با قالب \lr{\path{.pml}} به عنوان پاسخ بارگذاری کنید.
+
+توصیه می‌شود از ویرایشگرهای معمول و افزونه‌های\footnote{%
+مانند
+\href{https://corb.co/projects/sublime-promela-spin}{Sublime-Promela-Spin}،
+\lr{\href{https://atom.io/packages/language-promela}{language-promela} for Atom}،
+\lr{\href{https://github.com/tomyutao/code-spin}{code-spin} for VSCode} و
+\lr{\href{https://github.com/dsvictor94/vscode-promela}{Promela for VS Code}}
+} آن‌ها برای توسعهٔ کد خود استفاده کنید.
+
+\section*{مدل‌سازی و درستی‌یابی صوری یک پروتکل تبادل کلید}
+
+با افزایش اهمیت حفظ امنیت ارتباطات در شبکه‌ها،
+پروتکل‌های مختلفی برای رمزنگاری پیام‌ها طراحی شده است.
+این الگوریتم‌ها به دو نوع \textit{متقارن}\LTRfootnote{symmetric} و \textit{نامتقارن}\LTRfootnote{asymmetric} تقسیم می‌شوند.
+در الگوریتم‌های متقارن رمزنگاری و رمزگشایی پیام‌ها با یک \textit{کلید}\LTRfootnote{key} یکتا صورت می‌گیرد.
+این کلید را نمی‌توان به شکل عمومی منتشر کرد و انتقال آن بین دو طرف ارتباط خودش نیازمند یک کانال ارتباطی امن است.
+در الگوریتم‌های نامتقارن رمزنگاری با \textit{کلید عمومی}\LTRfootnote{public key} و رمزگشایی با \textit{کلید خصوصی} \LTRfootnote{private/secter key}صورت می‌گیرد.
+این الگوریتم‌ها کندترند ولی به کانال ارتباطی امن برای انتقال کلید نیازی ندارند.
+یک الگوی رایج برای بهره~بردن از مزایای هر دو روش،
+استفاده از رمزنگاری نامتقارن برای انتقال امن یک کلید و سپس ادامهٔ ارتباط با رمزنگاری متقارن است.
+
+فرض کنید ارغوان می‌خواهد در یک شبکهٔ ناامن با بهزاد صحبت کند.
+هر کدام از آن‌ها می‌توانند
+یک \textit{عدد یک‌بارمصرف}\LTRfootnote{nonce: \textbf{n}umber used \textbf{once}} تصادفی تولید کنند که فقط برای همین جلسهٔ ارتباطی معتبر است
+و با استفاده از رمزنگاری نامتقارن
+این عدد را به طرف دیگر اعلام کنند.
+در انتها، هر یک از دو طرف می‌توانند با استفاده از این اعداد یک‌بارمصرف یک کلید مشترک بسازند
+و ارتباط را با رمزنگاری متقارن ادامه دهند.
+
+هر پروتکل برای تبادل کلید باید در صورت اجرای موفق درستی دو گزاره را تضمین کند:
+\begin{description}
+    \item[اصالت]\LTRfootnote{authenticity} هر یک از طرف‌های ارتباط واقعاً همان کسی است که ادعا می‌کند.
+    \item[محرمانگی]\LTRfootnote{confidentiality} فقط دو طرف ارتباط کلید (در این روش اعداد یک‌بارمصرفِ سازندهٔ کلید) را می‌دانند.
+\end{description}
+
+\subsection{مدل‌سازی الگوریتم تبادل کلید بدون حضور مزاحم}
+
+ارغوان و بهزاد می‌توانند از سه پیام برای انتقال اعداد یک‌بارمصرفشان استفاده کنند:
+\begin{enumerate}
+    \item ارغوان عدد یک‌بارمصرف تصادفی خود را می‌سازد، هویت خود (\lr{$A$}) و عدد یک‌بارمصرفش (\lr{$N_A$}) را با کلید عمومی بهزاد (\lr{$K_B$}) رمزنگاری می‌کند و برای بهزاد می‌فرستد. (\lr{$\langle A, N_A\rangle_{K_B}$})
+    \item بهزاد پس از این که ارغوان می‌خواهد مکالمه‌ای را شروع کند، عدد یک‌بارمصرف تصادفی می‌سازد، عدد یک‌بارمصرف ارغوان (\lr{$N_A$}) و عدد یک‌بارمصرف خودش (\lr{$N_B$}) را با کلید عمومی \lr{$K_A$} رمزنگاری می‌کند و برای ارغوان می‌فرستد. (\lr{$\langle N_A, N_B\rangle_{K_A}$})
+    \item ارغوان پس از دریافت پیام بهزاد، عدد یک‌بارمصرف بهزاد (\lr{$N_B$}) را با کلید عمومی بهزاد (\lr{$K_B$}) رمزنگاری می‌کند و برای بهزاد می‌فرستد تا نشان دهد به کلید خصوصی ارغوان دسترسی دارد و واقعاً ارغوان است. (\lr{$\langle N_B\rangle_{K_B}$})
+\end{enumerate}
+
+سیستمی را شامل ارغوان و بهزاد و یک ارتباط کامل از ارغوان به بهزاد با زبان \lr{PROMELA} مدل‌سازی کنید.
+
+مدل‌سازی یک ارتباط از ارغوان به بهزاد کافی است؛
+بنابراین می‌توانید فرض کنید اعداد یک‌بارمصرف هر یک از آن‌ها یک عدد مشخص است.
+برای سادگی مدل، می‌توانید فرض کنید همهٔ ارتباطات به شکل قرار ملاقات\LTRfootnote{rendezvous} صورت می‌گیرند.
+ممکن است بخواهید در مدل‌سازیتان پیام سوم را به شکل \lr{$\langle N_B, \emptyset\rangle_{K_B}$} تصور کنید
+تا پیام‌ها یک‌اندازه شوند.
+برای مدل‌سازی رمزنگاری نامتقارن، می‌توانید یک پارامتر برای مشخص~کردن هویت کسی که پیام با کلید عمومی او رمزنگاری شده به پیام اضافه کنید.
+هنگام خواندن پیام، هر کس فقط وقتی باید بتواند محتویات رمزنگاری‌شدهٔ پیام را بخواند که با کلید عمومی خودش رمزنگاری شده باشد.
+
+آیا سیستم دچار بن‌بست\LTRfootnote{deadlock} می‌شود؟
+
+آیا ویژگی‌های اصالت و محرمانگی در این سیستم حفظ می‌شوند؟
+برای هر یک از آن‌ها یک ویژگی \lr{LTL} تعریف کنید و برقرار بودن هر یک از آن‌ها را بررسی کنید.
+
+\subsection{افزودن مزاحم منفعل}
+
+یک مزاحم\LTRfootnote{intruder} به مدل خود اضافه کنید.
+این مزاحم به تمام ارتباطات شبکه دسترسی دارد و می‌تواند به جای ارغوان یا بهزاد پیام‌هایشان را بردارد.
+هر کس ‐ از جمله مزاحم ‐ فقط وقتی می‌تواند محتویات رمزنگاری‌شدهٔ پیام‌ها را بخواند که با کلید عمومی خودش رمزنگاری شده باشد.
+مزاحم حافظه‌ای به اندازهٔ یک پیام دارد و می‌تواند آخرین پیامی را که برداشته برای هر کسی که بخواهد دوباره ارسال کند.
+
+نیازی به بررسی بن‌بست~نداشتن\LTRfootnote{deadlock-freeness} سیستم نیست.
+
+آیا اصالت و محرمانگی در سیستم حفظ می‌شود؟
+
+\subsection{تبدیل مزاحم به مزاحم فعال}
+
+فرض کنید ارغوان و بهزاد مزاحمی را که در مرحلهٔ قبل به سیستم افزودید به عنوان یک شخص ثالث به رسمیت می‌شناسند.
+بنابراین باید قابلیت‌هایی را به مدلتان اضافه کنید.
+ارغوان ممکن است برای بهزاد یا مزاحم پیام بفرستد.
+بهزاد ممکن است از ارغوان یا مزاحم پیام دریافت کند.
+مزاحم ممکن است
+پیام‌های افراد دیگر به هر کسی را بردارد و ذخیره کند،
+پیام‌هایی را که ذخیره کرده عیناً برای هرکسی دوباره بفرستد،
+و
+پیام جدیدی برای ارغوان یا بهزاد بفرست.
+
+ممکن است این پیام‌ها محتویات نادرستی داشته باشند؛ مثلاً \lr{$N_A$} در یک پیام نوع سوم برای خود ارغوان ارسال شود.
+از آن‌جا که ارغوان و بهزاد مزاحم را به عنوان یک شخص ثالث به رسمیت می‌شناسند،
+ممکن است پیامی را با کلید عمومی او رمزنگاری کنند و برایش ارسال کند.
+در این صورت مزاحم می‌تواند محتویات داخلی آن پیام را بخواند و اگر عدد یک‌بارمصرفی در آن بود آن عدد را ذخیره کند.
+
+پیاده‌سازی مدل برای یک ارتباط ارغوان و بهزاد کافی است؛
+بنابراین همچنان می‌توانید فرض کنید عدد یک‌بارمصرف هر یک از آن‌ها یک مقدار مشخص است.
+مهاجم می‌تواند به تعداد دلخواه هر یک از کارهایی را که گفته شد بکند؛
+اما برای سادگی، فرض کنید مهاجم همواره یک مقدار مشخص را به عنوان عدد یک‌بارمصرف خودش به کار می‌گیرد.
+
+نیازی به بررسی بن‌بست‌نداشتن سیستم نیست.
+
+با استفاده از ابزار وارسی مدل \lr{Spin}، یک سناریوی ناقض اصالت یا محرمانگی در این سیستم بیابید.
+آیا روشی برای وصله~زدن\LTRfootnote{patch} الگوریتم به ذهنتان می‌رسد تا این سناریو اتفاق نیفتد؟
+
+\section*{نحوهٔ تحویل}
+
+لطفاً فقط کد نهایی خود و یک سناریوی ناقض اصالت یا محرمانگی را در پرونده‌ای به نام \lr{\path{SID.pml}} یا \lr{\path{SID.zip}} (که \lr{SID} شمارهٔ دانشجویی شماست) پیش از اتمام مهلت تحویل در \href{https://cecm.ut.ac.ir/course/view.php?id=2809}{صفحهٔ وب درس} بارگذاری کنید.
+نیازی به تحویل کدهای مراحل میانی یا وصله~زدن الگوریتم \textit{نیست}؛ مراحل میانی صرفاً برای راهنمایی شما در انجام پروژه بیان شده‌اند.
+سناریوی ناقض اصالت یا محرمانگی را می‌توانید به شکل توضیح\LTRfootnote{comment} در انتهای کد یا در یک پروندهٔ جدا (با قالب \lr{\path{.pdf}}) بنویسید.
+
+توجه داشته باشید که این تمرین تحویل حضوری دارد و در صورت حضور~نیافتن در تحویل حضوری نمره‌ای از این تمرین دریافت نخواهید کرد.
+ 
+
+\end{document} 
