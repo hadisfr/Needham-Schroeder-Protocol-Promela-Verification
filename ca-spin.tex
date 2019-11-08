@@ -7,6 +7,7 @@
 \usepackage{float}
 \usepackage[inline]{enumitem}
 \usepackage{listings}
+\usepackage{pgf-umlsd}
 \usepackage[colorlinks, citecolor=Cyan, linkcolor=Cyan, filecolor=Cyan, urlcolor=Cyan]{hyperref}
 \usepackage{xepersian}
 
@@ -147,12 +148,28 @@
 
 \subsection{مدل‌سازی الگوریتم تبادل کلید بدون حضور مزاحم}
 
-ارغوان و بهزاد می‌توانند از سه پیام برای انتقال اعداد یک‌بارمصرفشان استفاده کنند:
+ارغوان و بهزاد می‌توانند از سه پیام برای انتقال اعداد یک‌بارمصرفشان استفاده کنند: (\autoref{fig:nsp})
 \begin{enumerate}
     \item ارغوان عدد یک‌بارمصرف تصادفی خود را می‌سازد، هویت خود (\lr{$A$}) و عدد یک‌بارمصرفش (\lr{$N_A$}) را با کلید عمومی بهزاد (\lr{$K_B$}) رمزنگاری می‌کند و برای بهزاد می‌فرستد. (\lr{$\langle A, N_A\rangle_{K_B}$})
     \item بهزاد پس از این که ارغوان می‌خواهد مکالمه‌ای را شروع کند، عدد یک‌بارمصرف تصادفی می‌سازد، عدد یک‌بارمصرف ارغوان (\lr{$N_A$}) و عدد یک‌بارمصرف خودش (\lr{$N_B$}) را با کلید عمومی \lr{$K_A$} رمزنگاری می‌کند و برای ارغوان می‌فرستد. (\lr{$\langle N_A, N_B\rangle_{K_A}$})
     \item ارغوان پس از دریافت پیام بهزاد، عدد یک‌بارمصرف بهزاد (\lr{$N_B$}) را با کلید عمومی بهزاد (\lr{$K_B$}) رمزنگاری می‌کند و برای بهزاد می‌فرستد تا نشان دهد به کلید خصوصی ارغوان دسترسی دارد و واقعاً ارغوان است. (\lr{$\langle N_B\rangle_{K_B}$})
 \end{enumerate}
+
+\begin{figure}
+    \centering
+    \begin{sequencediagram}
+    \newthread{alice}{ارغوان}
+    \newinst[2]{bob}{بهزاد}
+    \begin{messcall}[1]{alice}{\shortstack{\lr{$\langle A, N_A\rangle_{K_B}$}}}{bob}{}
+        \begin{messcall}[0]{bob}{\shortstack{\lr{$\langle N_A, N_B\rangle_{K_A}$}}}{alice}{}
+            \begin{messcall}[0]{alice}{\shortstack{\lr{$\langle N_B\rangle_{K_B}$}}}{bob}{}
+            \end{messcall}
+        \end{messcall}
+    \end{messcall}
+    \end{sequencediagram}
+    \caption{نحوهٔ کار الگوریتم تبادل کلید\label{fig:nsp}}
+\end{figure}
+
 
 سیستمی را شامل ارغوان و بهزاد و یک ارتباط کامل از ارغوان به بهزاد با زبان \lr{PROMELA} مدل‌سازی کنید.
 
